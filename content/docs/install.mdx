@@ -1,0 +1,179 @@
+# Installation Guide
+
+Get ConsentGate up and running in just a few minutes. This guide will walk you through the complete setup process.
+
+## Prerequisites
+
+Before you begin, make sure you have:
+
+- A verified domain in your PieEye Portal account
+- An active subscription (Starter, Growth, or Enterprise)
+- Access to your website's HTML source code
+
+## Step 1: Create Your Proxy
+
+1. Log in to your [PieEye Portal](https://portal.pii.ai/login)
+2. Navigate to the **Developer Setup** page
+3. Select a verified domain from the dropdown
+4. Click **Provision Proxy**
+5. Wait for the proxy to be created (usually takes 2-3 minutes)
+
+## Step 2: Replace Your GTM Script
+
+Once your proxy is ready, you'll receive a CloudFront URL. Replace your existing GTM script with:
+
+```html
+<!-- Replace this -->
+<script async src="https://www.googletagmanager.com/gtm.js?id=GTM-XXXXXXX"></script>
+
+<!-- With this -->
+<script async src="https://YOUR-CLOUDFRONT-URL/gtm.js?id=GTM-XXXXXXX"></script>
+```
+
+## Step 3: Configure Your CMP
+
+Add the following JavaScript snippet to your website before the GTM script:
+
+```javascript
+window.consentgate = {
+  cmp: "your-cmp-name",        // e.g., "onetrust", "didomi", "cookiebot"
+  consentCookie: "cookie-name", // The cookie your CMP sets for consent
+  // Optional: Custom consent check function
+  checkConsent: () => {
+    // Return true if user has consented, false otherwise
+    return window.YourCMP && window.YourCMP.hasConsent();
+  }
+};
+```
+
+### CMP-Specific Examples
+
+#### OneTrust
+```javascript
+window.consentgate = {
+  cmp: "onetrust",
+  consentCookie: "OptanonConsent",
+  checkConsent: () => {
+    return window.Optanon && window.Optanon.IsAlertBoxClosed();
+  }
+};
+```
+
+#### Didomi
+```javascript
+window.consentgate = {
+  cmp: "didomi",
+  consentCookie: "didomi_token",
+  checkConsent: () => {
+    return window.Didomi && window.Didomi.getConsentStatus();
+  }
+};
+```
+
+#### Cookiebot
+```javascript
+window.consentgate = {
+  cmp: "cookiebot",
+  consentCookie: "CookieConsent",
+  checkConsent: () => {
+    return window.Cookiebot && window.Cookiebot.consent.statistics;
+  }
+};
+```
+
+## Step 4: Test Your Implementation
+
+1. Open your website in a private/incognito browser window
+2. Check the browser's Network tab
+3. You should see GTM requests being blocked initially
+4. Grant consent through your CMP
+5. GTM requests should now be allowed through
+
+## Troubleshooting
+
+### GTM Still Loading Before Consent
+
+**Problem**: GTM is loading immediately, ignoring consent.
+
+**Solution**: 
+- Verify your CMP configuration is correct
+- Check that the `consentgate` object is defined before the GTM script
+- Ensure your CMP is setting the correct cookie name
+
+### 403 Forbidden Errors
+
+**Problem**: Getting 403 errors when GTM tries to load.
+
+**Solution**:
+- This is expected behavior when no consent is given
+- Check that your CMP is properly configured
+- Verify the consent cookie is being set correctly
+
+### 502 Bad Gateway Errors
+
+**Problem**: Getting 502 errors from the proxy.
+
+**Solution**:
+- Check your PieEye Portal for proxy status
+- Ensure your domain is verified
+- Contact support if the issue persists
+
+### CMP Not Detected
+
+**Problem**: ConsentGate can't detect your CMP.
+
+**Solution**:
+- Verify the `cmp` field matches your CMP exactly
+- Check that your CMP is loaded before the ConsentGate configuration
+- Use the `checkConsent` function for custom logic
+
+## Advanced Configuration
+
+### Custom Consent Logic
+
+For complex consent scenarios, you can use a custom function:
+
+```javascript
+window.consentgate = {
+  cmp: "custom",
+  checkConsent: () => {
+    // Your custom consent logic here
+    const hasAnalyticsConsent = checkAnalyticsConsent();
+    const hasMarketingConsent = checkMarketingConsent();
+    
+    // Only allow GTM if both are true
+    return hasAnalyticsConsent && hasMarketingConsent;
+  }
+};
+```
+
+### Multiple Domains
+
+If you have multiple domains, you'll need to create a separate proxy for each:
+
+1. Add each domain to your PieEye Portal
+2. Verify each domain using DNS records
+3. Create a proxy for each verified domain
+4. Use the appropriate CloudFront URL for each domain
+
+## Support
+
+Need help? We're here to assist:
+
+- **Email**: support@pii.ai
+- **Documentation**: [portal.pii.ai/docs](https://portal.pii.ai/docs)
+- **Status Page**: [status.pii.ai](https://status.pii.ai)
+
+## Next Steps
+
+Once your proxy is set up and working:
+
+1. Monitor your consent rates in the PieEye Portal
+2. Set up webhooks for real-time notifications
+3. Configure custom analytics and reporting
+4. Consider upgrading to a higher plan for more features
+
+---
+
+*Last updated: January 2025*
+
